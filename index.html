@@ -574,18 +574,32 @@ tr:hover td{background:#F5F8FF;}
       <div class="cart-items" id="cart-items"><div class="empty-state"><div class="ei">🛒</div>Nenhum produto</div></div>
       <div class="cart-foot">
         <div class="cart-total-row"><span style="font-size:13px;font-weight:600;color:var(--text2)">Total</span><span class="cart-total-val" id="cart-total">R$ 0,00</span></div>
-        <div class="fr fr2" style="margin-bottom:8px">
-          <div class="fg"><label>Cliente</label><select id="pdv-cli"><option value="">— Balcão —</option></select></div>
-          <div class="fg"><label>Conta</label><select id="pdv-conta"><option>PF Alessandra</option><option>PF Natally</option><option>BTG</option></select></div>
+        <!-- Cliente + botão cadastrar -->
+        <div style="margin-bottom:8px">
+          <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Cliente</label>
+          <div style="display:flex;gap:5px;margin-top:3px">
+            <select id="pdv-cli" style="flex:1;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;font-family:'Nunito',sans-serif;font-size:12px"><option value="">— Balcão —</option></select>
+            <button onclick="openCliModalPDV()" title="Cadastrar novo cliente" style="padding:6px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;flex-shrink:0">+</button>
+          </div>
         </div>
         <div class="fr fr2" style="margin-bottom:8px">
+          <div class="fg"><label>Conta</label><select id="pdv-conta"><option>PF Alessandra</option><option>PF Natally</option><option>BTG</option></select></div>
           <div class="fg"><label>Pagamento</label>
             <select id="pdv-pgto" onchange="togglePDVParc();calcTaxaCart()">
               <option value="Dinheiro">Dinheiro</option><option value="PIX">PIX</option><option value="Cartão Débito">Cartão Débito</option><option value="credito">Cartão Crédito</option><option value="Boleto">Boleto</option>
             </select>
           </div>
+        </div>
+        <div class="fr fr2" style="margin-bottom:8px">
           <div class="fg" id="pdv-parc-w" style="display:none"><label>Parcelas</label>
             <select id="pdv-parc" onchange="calcTaxaCart()"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select>
+          </div>
+          <!-- DESCONTO -->
+          <div class="fg">
+            <label>Desconto (R$)</label>
+            <input type="number" id="pdv-desconto" min="0" step="0.01" placeholder="0,00"
+              style="width:100%;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;font-family:'Nunito',sans-serif;font-size:12px"
+              oninput="calcTaxaCart()">
           </div>
         </div>
         <!-- TAXA MAQUININHA -->
@@ -606,6 +620,12 @@ tr:hover td{background:#F5F8FF;}
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:5px;padding-top:5px;border-top:1px solid #F5D08A">
             <span style="font-weight:700;color:var(--text)">Valor líquido recebido:</span><span id="taxa-liquido" style="font-weight:700;color:var(--green)">R$ 0,00</span>
           </div>
+        </div>
+        <!-- RESUMO FINAL -->
+        <div id="pdv-resumo-final" style="display:none;background:#F0FBF5;border:1px solid #A8E6C8;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Subtotal:</span><span id="prf-sub" style="font-weight:600">R$ 0,00</span></div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px"><span style="color:var(--red)">Desconto:</span><span id="prf-desc" style="font-weight:600;color:var(--red)">− R$ 0,00</span></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px solid #A8E6C8"><span style="font-weight:700">Total final:</span><span id="prf-total" style="font-weight:700;color:var(--green)">R$ 0,00</span></div>
         </div>
         <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center" onclick="finalizarVenda()">✓ Finalizar Venda</button>
         <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;margin-top:6px" onclick="clearCart()">Limpar</button>
@@ -991,7 +1011,13 @@ tr:hover td{background:#F5F8FF;}
     </div>
     <div class="fg" style="margin-bottom:10px"><label>Descrição</label><input type="text" id="lanc-desc"></div>
     <div class="fr fr3">
-      <div class="fg"><label>Categoria</label><select id="lanc-cat"><option>Venda</option><option>Compra de Estoque</option><option>Embalagem</option><option>Marketing</option><option>Aluguel</option><option>Salário</option><option>Serviço</option><option>Imposto</option><option>Taxa Maquininha</option><option>Custo Fixo</option><option>Outro</option></select></div>
+      <div class="fg"><label>Categoria</label>
+        <select id="lanc-cat" onchange="if(this.value==='__nova__')novaCategoria(this)">
+          <option>Venda</option><option>Compra de Estoque</option><option>Embalagem</option><option>Marketing</option><option>Aluguel</option><option>Salário</option><option>Serviço</option><option>Imposto</option><option>Taxa Maquininha</option><option>Custo Fixo</option><option>Outro</option>
+          <option disabled>──────────</option>
+          <option value="__nova__">✚ Nova categoria...</option>
+        </select>
+      </div>
       <div class="fg"><label>Centro de Custo</label><input type="text" id="lanc-cc" placeholder="Opcional"></div>
       <div class="fg"><label>Cód. Referência</label><input type="text" id="lanc-cref" placeholder="Opcional"></div>
     </div>
@@ -1222,7 +1248,18 @@ function renderCart(){
   calcTaxaCart();
 }
 function chgQ(pid,d){const idx=window.cart.findIndex(x=>x.pid===pid);window.cart[idx].qty+=d;if(window.cart[idx].qty<=0)window.cart.splice(idx,1);renderCart();}
-function clearCart(){window.cart=[];renderCart();}
+function clearCart(){
+  window.cart=[];
+  const desc=document.getElementById('pdv-desconto');
+  if(desc)desc.value='';
+  renderCart();
+}
+
+function openCliModalPDV(){
+  // Abre modal de cliente e após salvar volta ao PDV selecionando o novo cliente
+  window._pdvCliCallback=true;
+  openCliModal();
+}
 function togglePDVParc(){
   const v=document.getElementById('pdv-pgto').value;
   document.getElementById('pdv-parc-w').style.display=v==='credito'?'block':'none';
@@ -1231,15 +1268,32 @@ function togglePDVParc(){
 function calcTaxaCart(){
   const pgto=document.getElementById('pdv-pgto').value;
   const taxaWrap=document.getElementById('pdv-taxa-wrap');
-  // Mostra taxa para cartão débito e crédito
+  const subtotal=window.cart.reduce((s,i)=>s+i.preco*i.qty,0);
+  const desconto=parseFloat(document.getElementById('pdv-desconto')?.value)||0;
+  const totalComDesc=Math.max(0,subtotal-desconto);
+
+  // Atualiza total no carrinho
+  document.getElementById('cart-total').textContent=fmt(totalComDesc);
+
+  // Resumo final com desconto
+  const resumoEl=document.getElementById('pdv-resumo-final');
+  if(desconto>0&&resumoEl){
+    resumoEl.style.display='block';
+    document.getElementById('prf-sub').textContent=fmt(subtotal);
+    document.getElementById('prf-desc').textContent='− '+fmt(desconto);
+    document.getElementById('prf-total').textContent=fmt(totalComDesc);
+  } else if(resumoEl){
+    resumoEl.style.display='none';
+  }
+
+  // Taxa maquininha
   if(pgto==='credito'||pgto==='Cartão Débito'){
     taxaWrap.style.display='block';
     const pct=parseFloat(document.getElementById('pdv-taxa-pct').value)||0;
-    const total=window.cart.reduce((s,i)=>s+i.preco*i.qty,0);
-    const desconto=total*(pct/100);
-    const liquido=total-desconto;
-    document.getElementById('taxa-bruto').textContent=fmt(total);
-    document.getElementById('taxa-desconto').textContent='− '+fmt(desconto);
+    const taxaValor=totalComDesc*(pct/100);
+    const liquido=totalComDesc-taxaValor;
+    document.getElementById('taxa-bruto').textContent=fmt(totalComDesc);
+    document.getElementById('taxa-desconto').textContent='− '+fmt(taxaValor);
     document.getElementById('taxa-liquido').textContent=fmt(liquido);
   } else {
     taxaWrap.style.display='none';
@@ -1247,7 +1301,9 @@ function calcTaxaCart(){
 }
 async function finalizarVenda(){
   if(!window.cart.length)return alert('Carrinho vazio!');
-  const total=window.cart.reduce((s,i)=>s+i.preco*i.qty,0);
+  const subtotal=window.cart.reduce((s,i)=>s+i.preco*i.qty,0);
+  const descVenda=parseFloat(document.getElementById('pdv-desconto')?.value)||0;
+  const total=Math.max(0,subtotal-descVenda);
   const cid=document.getElementById('pdv-cli').value;
   const cl=window.dbData.clis.find(x=>x._id===cid);
   const conta=document.getElementById('pdv-conta').value;
@@ -1485,7 +1541,7 @@ function parseDataBR(s){
 
 function movePeriod(page,dir){const p=window.periods[page];const np=addMonths(p.y,p.m,dir);window.periods[page]=np;document.getElementById(`period-${page}`).textContent=periodLabel(np);if(page==='despesas')renderDespesas();if(page==='receitas')renderReceitas();if(page==='extrato'){renderExtrato();renderExtratoCContas();}if(page==='lucro')renderLucro();if(page==='competencia')renderCompetencia();}
 function buildStrip(tipo,period){const list=window.dbData.lancs.filter(l=>l.tipo===tipo&&inPeriod(l.venc,period));const vencidos=list.filter(l=>!l.pago&&l.venc<today()).reduce((s,l)=>s+l.valor,0);const vH=list.filter(l=>!l.pago&&l.venc===today()).reduce((s,l)=>s+l.valor,0);const aV=list.filter(l=>!l.pago&&l.venc>today()).reduce((s,l)=>s+l.valor,0);const pagos=list.filter(l=>l.pago).reduce((s,l)=>s+l.valor,0);const total=list.reduce((s,l)=>s+l.valor,0);return `<div class="ss-item"><div class="ss-label">Vencidos (R$)</div><div class="ss-val ${vencidos>0?'red':'zero'}">${fmt(vencidos)}</div></div><div class="ss-item"><div class="ss-label">Vencem hoje (R$)</div><div class="ss-val ${vH>0?'orange':'zero'}">${fmt(vH)}</div></div><div class="ss-item"><div class="ss-label">A ${tipo==='saida'?'Vencer':'Receber'} (R$)</div><div class="ss-val navy">${fmt(aV)}</div></div><div class="ss-item"><div class="ss-label">${tipo==='saida'?'Pagos':'Recebidos'} (R$)</div><div class="ss-val green">${fmt(pagos)}</div></div><div class="ss-item"><div class="ss-label">Total do Período</div><div class="ss-val navy">${fmt(total)}</div></div>`;}
-function renderDespesas(){const p=window.periods.despesas;document.getElementById('period-despesas').textContent=periodLabel(p);document.getElementById('desp-strip').innerHTML=buildStrip('saida',p);const q=(document.getElementById('desp-q').value||'').toLowerCase();const conta=document.getElementById('desp-conta').value;const list=window.dbData.lancs.filter(l=>l.tipo==='saida'&&inPeriod(l.venc,p)&&(!conta||l.conta===conta)&&(!q||l.desc.toLowerCase().includes(q)));renderLancTable('tb-despesas',list,'saida');document.getElementById('desp-total').textContent=fmt(list.reduce((s,l)=>s+l.valor,0));}
+function renderDespesas(){const p=window.periods.despesas;document.getElementById('period-despesas').textContent=periodLabel(p);document.getElementById('desp-strip').innerHTML=buildStrip('saida',p);const q=(document.getElementById('desp-q').value||'').toLowerCase();const conta=document.getElementById('desp-conta').value;const list=window.dbData.lancs.filter(l=>l.tipo==='saida'&&inPeriod(l.venc,p)&&(!conta||l.conta===conta)&&(!q||l.desc.toLowerCase().includes(q)));renderLancTable('tb-despesas',list,'saida');const total=list.reduce((s,l)=>s+l.valor,0);document.getElementById('desp-total').textContent=fmt(total);}
 function renderReceitas(){const p=window.periods.receitas;document.getElementById('period-receitas').textContent=periodLabel(p);document.getElementById('rec-strip').innerHTML=buildStrip('entrada',p);const q=(document.getElementById('rec-q').value||'').toLowerCase();const conta=document.getElementById('rec-conta').value;const list=window.dbData.lancs.filter(l=>l.tipo==='entrada'&&inPeriod(l.venc,p)&&(!conta||l.conta===conta)&&(!q||l.desc.toLowerCase().includes(q)));renderLancTable('tb-receitas',list,'entrada');document.getElementById('rec-total').textContent=fmt(list.reduce((s,l)=>s+l.valor,0));}
 function renderLancTable(tbId,list,tipo){const tb=document.getElementById(tbId);if(!list.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="ei">${tipo==='saida'?'💸':'💰'}</div>Nenhum lançamento</div></td></tr>`;return;}tb.innerHTML=list.sort((a,b)=>a.venc.localeCompare(b.venc)).map(l=>{const vencido=!l.pago&&l.venc<today();const sit=l.pago?`<span class="badge b-green">Pago</span>`:vencido?`<span class="badge b-red">Vencido</span>`:`<span class="badge b-orange">Em Aberto</span>`;const anexoBtn=l.anexo?.base64?`<button class="btn-ghost" onclick="verAnexoLanc('${l._id}')" title="Ver anexo" style="color:var(--blue)">📎</button>`:'';
     const editBtn=`<button class="btn-ghost" onclick="editarLanc('${l._id}')" title="Editar" style="color:var(--text3)">✏️</button>`;return `<tr><td>${l.venc}</td><td>${l.dataPgto||'—'}</td><td><div style="font-weight:600">${l.desc}</div><div class="td-tags"><span class="tag">${l.cat}</span><span class="tag">${l.conta}</span>${l.fpgto?`<span class="tag">${l.fpgto}</span>`:''}</div></td><td style="font-weight:700">${fmt(l.valor)}</td><td style="font-weight:700;color:${tipo==='saida'?'var(--red)':'var(--green)'}">${l.pago?'—':fmt(l.valor)}</td><td>${sit}</td><td style="display:flex;gap:4px;align-items:center">${!l.pago?`<button class="btn btn-xs" style="background:#D5F5E8;color:var(--green);border:1px solid #A8E6C8;border-radius:5px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;padding:2px 8px" onclick="marcarPago('${l._id}')">✓ Pago</button>`:``}${editBtn}${anexoBtn}<button class="btn-ghost" onclick="delLanc('${l._id}')" style="color:var(--red)">🗑️</button></td></tr>`;}).join('');}
@@ -1616,7 +1672,28 @@ function renderExtratoCContas(){const contas=['PF Alessandra','PF Natally','BTG'
 function renderClientes(){const q=(document.getElementById('cli-q').value||'').toLowerCase();const list=window.dbData.clis.filter(c=>!q||c.nome.toLowerCase().includes(q)||c.tel?.includes(q));const tb=document.getElementById('tb-clientes');if(!list.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="ei">👥</div>Nenhum cliente</div></td></tr>`;return;}tb.innerHTML=list.map(c=>{const tc=window.dbData.vendas.filter(v=>v.clienteId===c._id).reduce((s,v)=>s+v.total,0);return `<tr><td style="font-weight:600">${c.nome}</td><td>${c.tel||'—'}</td><td>${c.email||'—'}</td><td>${c.cpf||'—'}</td><td style="font-weight:700;color:var(--navy)">${fmt(tc)}</td><td><button class="btn-ghost" onclick="editCli('${c._id}')">✏️</button><button class="btn-ghost" onclick="delCli('${c._id}')">🗑️</button></td></tr>`;}).join('');}
 function openCliModal(){document.getElementById('mcli-h').textContent='Novo Cliente';document.getElementById('mcli-id').value='';['mcli-nome','mcli-cpf','mcli-tel','mcli-email','mcli-end'].forEach(id=>document.getElementById(id).value='');openOv('ov-cliente');}
 function editCli(id){const c=window.dbData.clis.find(x=>x._id===id);document.getElementById('mcli-h').textContent='Editar Cliente';document.getElementById('mcli-id').value=id;document.getElementById('mcli-nome').value=c.nome;document.getElementById('mcli-cpf').value=c.cpf||'';document.getElementById('mcli-nasc').value=c.nasc||'';document.getElementById('mcli-tel').value=c.tel||'';document.getElementById('mcli-email').value=c.email||'';document.getElementById('mcli-end').value=c.end||'';openOv('ov-cliente');}
-async function saveCli(){const id=document.getElementById('mcli-id').value;const obj={nome:document.getElementById('mcli-nome').value,cpf:document.getElementById('mcli-cpf').value,nasc:document.getElementById('mcli-nasc').value,tel:document.getElementById('mcli-tel').value,email:document.getElementById('mcli-email').value,end:document.getElementById('mcli-end').value};if(!obj.nome)return alert('Informe o nome');if(id)await window.fbSet('clis',id,obj);else await window.fbAdd('clis',obj);closeOv('ov-cliente');showToast('✅ Cliente salvo!','green');}
+async function saveCli(){
+  const id=document.getElementById('mcli-id').value;
+  const obj={nome:document.getElementById('mcli-nome').value,cpf:document.getElementById('mcli-cpf').value,nasc:document.getElementById('mcli-nasc').value,tel:document.getElementById('mcli-tel').value,email:document.getElementById('mcli-email').value,end:document.getElementById('mcli-end').value};
+  if(!obj.nome)return alert('Informe o nome');
+  let ref;
+  if(id)await window.fbSet('clis',id,obj);
+  else ref=await window.fbAdd('clis',obj);
+  closeOv('ov-cliente');
+  showToast('✅ Cliente salvo!','green');
+  // Se veio do PDV, seleciona o novo cliente automaticamente
+  if(window._pdvCliCallback&&ref){
+    window._pdvCliCallback=false;
+    setTimeout(()=>{
+      const sel=document.getElementById('pdv-cli');
+      if(sel){
+        const opt=document.createElement('option');
+        opt.value=ref.id;opt.textContent=obj.nome;
+        sel.appendChild(opt);sel.value=ref.id;
+      }
+    },800);
+  }
+}
 async function delCli(id){if(!confirm('Excluir?'))return;await window.fbDel('clis',id);showToast('🗑️ Excluído','red');}
 
 window.periods=window.periods||{despesas:getCurrPeriod(),receitas:getCurrPeriod(),extrato:getCurrPeriod(),lucro:getCurrPeriod(),competencia:getCurrPeriod()};
@@ -1926,7 +2003,20 @@ function renderLucro(){
 }
 
 
-// ── ANEXO LANÇAMENTO ─────────────────────────────────────
+// ── NOVA CATEGORIA ───────────────────────────────────────
+function novaCategoria(sel){
+  const nome=prompt('Nome da nova categoria:');
+  if(!nome||!nome.trim()){sel.value=sel.options[0].value;return;}
+  const n=nome.trim();
+  // Adiciona antes do separador
+  const opt=document.createElement('option');
+  opt.value=n;opt.textContent=n;
+  // Insere antes do separador (penúltimo antes de __nova__)
+  const idx=Array.from(sel.options).findIndex(o=>o.value==='__nova__');
+  sel.insertBefore(opt,sel.options[idx-1]);
+  sel.value=n;
+  showToast('✅ Categoria "'+n+'" adicionada!','green');
+}
 let _lancAnexBase64 = '';
 let _lancAnexNome = '';
 
