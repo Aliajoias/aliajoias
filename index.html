@@ -1640,32 +1640,36 @@ function renderCompetencia(){
   });
 
   // ── AGRUPA PARCELAS ────────────────────────────────────
-  // Remove sufixo de parcela ex: "Fernanda MKT 2/4" → "Fernanda MKT"
-  function descBase(desc){return(desc||'').replace(/\s+\d+\/\d+$/, '').trim();}
+  // Remove sufixo de parcela: "Fernanda MKT 2/4" → "Fernanda MKT"
+  // Aceita formatos: "2/4", "2 de 4", " - 2/4", "(2/4)"
+  function descBase(desc){
+    return(desc||'')
+      .replace(/\s*[-–]?\s*\(?\d+\s*[\/de]+\s*\d+\)?\s*$/i,'')
+      .trim();
+  }
 
-  // Agrupa lançamentos que têm a mesma descBase + conta + cat + tipo
+  // Agrupa lançamentos com mesma descBase + conta + cat + tipo
   const grupos={};
   lancs.forEach(l=>{
     const base=descBase(l.desc);
-    // Detecta se é parcelado verificando padrão " X/Y" no final da desc
-    const isParc=/\s\d+\/\d+$/.test(l.desc||'');
-    // Chave de agrupamento
+    const isParc=/\d+\s*[\/]\s*\d+/.test(l.desc||'');
+    const totalMatch=(l.desc||'').match(/\/\s*(\d+)/);
+    const totalParc=totalMatch?parseInt(totalMatch[1]):1;
     const key=`${base}||${l.conta}||${l.cat}||${l.tipo}`;
     if(!grupos[key]){
-      // Busca total de parcelas original se parcelado
-      const totalMatch=(l.desc||'').match(/\/(\d+)$/);
-      const totalParc=totalMatch?parseInt(totalMatch[1]):1;
       grupos[key]={
-        ids:[l._id], desc:base, conta:l.conta, cat:l.cat, tipo:l.tipo,
-        totalValor:l.valor, data:l.data||l.venc, fpgto:l.fpgto||'',
-        pago:l.pago, venc:l.venc, isParc, totalParc,
-        parcAtivas:1, anexo:l.anexo||null
+        ids:[l._id],desc:base,conta:l.conta,cat:l.cat,tipo:l.tipo,
+        totalValor:l.valor,data:l.data||l.venc,fpgto:l.fpgto||'',
+        pago:l.pago,venc:l.venc,isParc,totalParc,
+        parcAtivas:1,anexo:l.anexo||null
       };
     } else {
       grupos[key].ids.push(l._id);
       grupos[key].totalValor+=l.valor;
       grupos[key].parcAtivas++;
-      if(l.anexo?.base64) grupos[key].anexo=l.anexo;
+      if(l.anexo?.base64)grupos[key].anexo=l.anexo;
+      // Atualiza totalParc se encontrar valor maior
+      if(totalParc>grupos[key].totalParc)grupos[key].totalParc=totalParc;
     }
   });
 
@@ -1721,7 +1725,7 @@ function renderCompetencia(){
   tb.innerHTML=agrupados.map(g=>{
     const cor=catColors[g.cat]||'#95A5A6';
     // Condição de pagamento: "4x Cartão Crédito" ou "À vista PIX" etc.
-    const parcLabel=g.isParc?`${g.totalParc}x`:g.totalParc===1?'1x':'';
+    const parcLabel=g.isParc||g.parcAtivas>1?`${g.totalParc}x`:'1x';
     const fpgtoLabel=g.fpgto||'';
     const condPagto=[parcLabel,fpgtoLabel].filter(Boolean).join(' ')||'—';
     const vencido=!g.pago&&g.venc<today();
