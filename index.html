@@ -1561,6 +1561,10 @@ function editarLanc(id){
 function gerarParcelasLanc(){const cond=document.getElementById('lanc-parc').value;const val=+document.getElementById('lanc-valor').value||0;const venc=document.getElementById('lanc-venc').value||today();if(cond==='À vista'||val===0){document.getElementById('lanc-parcelas-area').style.display='none';return;}const n=parseInt(cond);document.getElementById('lanc-parcelas-area').style.display='block';const rows=[];for(let i=0;i<n;i++){const d=new Date(venc);d.setMonth(d.getMonth()+i);rows.push(`<tr><td>${i+1}/${n}</td><td>${d.toISOString().slice(0,10)}</td><td>${fmt(val/n)}</td></tr>`);}document.getElementById('lanc-parc-tbody').innerHTML=rows.join('');}
 function togglePago(){const c=document.getElementById('lanc-pago').checked;document.getElementById('lanc-dpgto-fg').style.display=c?'block':'none';if(c)document.getElementById('lanc-dpgto').value=today();}
 async function saveLanc(){
+  // Previne duplo clique
+  const btn=document.querySelector('#ov-lanc .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Salvando...';}
+  try{
   const tipo=document.getElementById('lanc-tipo').value;
   const editId=document.getElementById('lanc-edit-id').value;
   const parc=document.getElementById('lanc-parc').value;
@@ -1596,6 +1600,12 @@ async function saveLanc(){
         dataPgto:pago&&n===1?today():'',anexo:i===0?anexo:null});
     }
     closeOv('ov-lanc');showToast('✅ Lançamento salvo!','green');
+  }
+  }catch(err){
+    alert('❌ Erro ao salvar: '+err.message);
+    console.error(err);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Salvar';}
   }
 }
 async function delLanc(id){if(!confirm('Excluir?'))return;await window.fbDel('lancs',id);showToast('🗑️ Excluído','red');}
@@ -1746,6 +1756,7 @@ function renderCompetencia(){
       <td>${sit}</td>
       <td style="white-space:nowrap">
         <button class="btn-ghost" onclick="editarLanc('${g.ids[0]}')" title="Editar">✏️</button>
+        <button class="btn-ghost" onclick="delGrupoLanc(${JSON.stringify(g.ids)})" title="Excluir" style="color:var(--red)">🗑️</button>
         ${g.anexo?.base64?`<button class="btn-ghost" onclick="verAnexoLancById('${g.ids[0]}')" style="color:var(--blue)" title="Ver anexo">📎</button>`:''}
       </td>
     </tr>`;
@@ -1762,6 +1773,13 @@ function verAnexoLancById(id){
   } else {
     w.document.write(`<img src="${l.anexo.base64}" style="max-width:100%;display:block;margin:auto">`);
   }
+}
+
+async function delGrupoLanc(ids){
+  const n=ids.length;
+  if(!confirm(`Excluir ${n} lançamento(s)?`))return;
+  for(const id of ids) await window.fbDel('lancs',id);
+  showToast(`🗑️ ${n} lançamento(s) excluído(s)`,'red');
 }
 function renderLucro(){
   const p=window.periods.lucro;
